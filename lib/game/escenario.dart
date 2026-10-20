@@ -1,16 +1,15 @@
 import 'dart:ui';
 import 'package:flame/components.dart';
-import '../theme/app_colors.dart';
 import 'ritnova_game.dart';
 
 // Dibuja las líneas de los carriles y la barra de la zona de toque
 class Escenario extends Component with HasGameReference<RitnovaGame> {
   final Paint _linea = Paint()
-    ..color = AppColors.secondary.withAlpha(110)
+    ..color = const Color.fromARGB(255, 220, 217, 206).withAlpha(110)
     ..strokeWidth = 2;
 
   final Paint _zona = Paint()
-    ..color = AppColors.primary
+    ..color = const Color.fromARGB(255, 245, 241, 238)
     ..style = PaintingStyle.stroke
     ..strokeWidth = 5;
 
