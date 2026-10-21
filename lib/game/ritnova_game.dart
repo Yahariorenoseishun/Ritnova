@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:audioplayers/audioplayers.dart' show AudioPlayer;
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame_audio/flame_audio.dart';
@@ -7,6 +8,7 @@ import '../models/nota.dart';
 import '../models/partida.dart';
 import '../theme/app_colors.dart';
 import 'escenario.dart';
+import 'nova_efecto.dart';
 import 'tecla.dart';
 
 // El "motor" del juego (el Controlador de tu MVC).
@@ -23,6 +25,9 @@ class RitnovaGame extends FlameGame with TapCallbacks {
   // (en segundos). Positivo = la música arranca más temprano.
   static const double desfaseAudio = 0.0;
 
+  // Combos que disparan el efecto "nova"
+  static const List<int> hitosCombo = [10, 25, 50, 75, 100];
+
   final List<Nota> patron; // las notas de la canción
   final String? archivoAudio; // null = sin música
   final Partida partida = Partida();
@@ -30,6 +35,7 @@ class RitnovaGame extends FlameGame with TapCallbacks {
   int _siguiente = 0; // cuál es la próxima nota por mostrar
   bool _musicaIniciada = false;
   bool _detenido = false;
+  AudioPlayer? _musica; // el reproductor de ESTA partida
 
   RitnovaGame({required this.patron, this.archivoAudio});
 
@@ -41,7 +47,7 @@ class RitnovaGame extends FlameGame with TapCallbacks {
     add(Escenario());
     // Carga los sonidos antes de empezar para que no haya retraso
     await FlameAudio.audioCache.loadAll([
-      'tap.wav',
+      'nova.wav',
       if (archivoAudio != null) archivoAudio!,
     ]);
     // Arranca el reloj antes de 0 para dar tiempo a que caigan las primeras teclas
@@ -63,20 +69,33 @@ class RitnovaGame extends FlameGame with TapCallbacks {
     return izquierda + ancho * borde / carriles;
   }
 
-  // Detiene la música (al terminar o al salir de la pantalla)
+  // Arranca la canción con un reproductor propio de esta partida
+  Future<void> _iniciarMusica() async {
+    final reproductor = await FlameAudio.playLongAudio(
+      archivoAudio!,
+      volume: ConfiguracionAudio.volumenMusica / 100,
+    );
+    _musica = reproductor;
+    if (_detenido) reproductor.dispose(); // saliste antes de que arrancara
+  }
+
+  // Corta la música (al perder o al salir de la pantalla)
   void detener() {
     if (_detenido) return;
     _detenido = true;
-    if (_musicaIniciada) {
-      FlameAudio.bgm.stop();
-      FlameAudio.bgm.dispose();
-    }
+    _musica?.dispose(); // detiene y libera el reproductor
+  }
+
+  // Efecto nova: sonido más anillos de luz
+  void _nova() {
+    add(NovaEfecto());
+    FlameAudio.play('nova.wav', volume: ConfiguracionAudio.volumenEfectos / 100);
   }
 
   @override
   void update(double dt) {
     if (partida.terminada) {
-      detener();
+      if (partida.vida <= 0) detener(); // si perdiste, la música se corta
       pauseEngine();
       return;
     }
@@ -86,11 +105,7 @@ class RitnovaGame extends FlameGame with TapCallbacks {
     // Cuando el reloj llega a 0, empieza la canción
     if (!_musicaIniciada && archivoAudio != null && tiempo >= -desfaseAudio) {
       _musicaIniciada = true;
-      FlameAudio.bgm.initialize();
-      FlameAudio.bgm.play(
-        archivoAudio!,
-        volume: ConfiguracionAudio.volumenMusica / 100,
-      );
+      _iniciarMusica();
     }
 
     // Crea las teclas que ya toca mostrar
@@ -137,8 +152,9 @@ class RitnovaGame extends FlameGame with TapCallbacks {
     elegida.resuelta = true;
     partida.registrar(_juzgar(mejor));
     elegida.removeFromParent();
-    // Sonido del toque, con el volumen de efectos de OPCIONES
-    FlameAudio.play('tap.wav', volume: ConfiguracionAudio.volumenEfectos / 100);
+
+    // Si el combo llegó a un hito, ¡nova!
+    if (hitosCombo.contains(partida.combo)) _nova();
   }
 
   Juicio _juzgar(double diferencia) {
