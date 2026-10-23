@@ -5,8 +5,10 @@ import '../models/cancion.dart';
 import '../models/nivel.dart';
 import '../models/nota.dart';
 import '../models/partida.dart';
+import '../models/progreso.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
+import 'resultado_screen.dart';
 
 class JuegoScreen extends StatefulWidget {
   final Nivel nivel; // el nivel que el jugador eligió
@@ -19,6 +21,8 @@ class JuegoScreen extends StatefulWidget {
 
 class _JuegoScreenState extends State<JuegoScreen> {
   late final RitnovaGame _juego;
+  bool _yaNavego = false; // evita abrir RESULTADO dos veces
+  bool _esRecord = false; // se llena al terminar el nivel
 
   @override
   void initState() {
@@ -29,10 +33,40 @@ class _JuegoScreenState extends State<JuegoScreen> {
       patron: cancion?.patron ?? patronPrueba,
       archivoAudio: cancion?.archivo,
     );
+    // Se entera cada vez que la partida cambia (para saber cuándo termina)
+    _juego.partida.addListener(_alCambiarPartida);
+  }
+
+  // Cuando la partida termina: guarda el puntaje y pasa a RESULTADO
+  void _alCambiarPartida() {
+    if (_juego.partida.terminada && !_yaNavego) {
+      _yaNavego = true;
+      // Solo cuenta como récord si completaste el nivel (te quedó vida)
+      if (_juego.partida.vida > 0) {
+        _esRecord = Progreso.instancia
+            .registrarPuntaje(widget.nivel.id, _juego.partida.puntaje);
+      }
+      Future.delayed(const Duration(milliseconds: 1800), _irAResultado);
+    }
+  }
+
+  void _irAResultado() {
+    if (!mounted) return; // si ya saliste de la pantalla, no hace nada
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ResultadoScreen(
+          partida: _juego.partida,
+          nivel: widget.nivel,
+          esRecord: _esRecord,
+        ),
+      ),
+    );
   }
 
   @override
   void dispose() {
+    _juego.partida.removeListener(_alCambiarPartida);
     _juego.detener(); // por si sales con la música sonando
     super.dispose();
   }
@@ -120,7 +154,10 @@ class _JuegoScreenState extends State<JuegoScreen> {
                                   .copyWith(color: _color(p.ultimoJuicio))),
                         ),
                         if (p.terminada)
-                          Center(child: Text('FIN', style: AppText.titulo)),
+                          Center(
+                            child: Text(p.vida > 0 ? 'COMPLETADO' : 'FIN',
+                                style: AppText.titulo),
+                          ),
                       ],
                     );
                   },

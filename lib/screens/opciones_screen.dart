@@ -4,6 +4,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../widgets/barra_titulo.dart';
 import '../widgets/control_volumen.dart';
+import '../models/progreso.dart';
 
 class OpcionesScreen extends StatefulWidget {
   const OpcionesScreen({super.key});
@@ -13,6 +14,13 @@ class OpcionesScreen extends StatefulWidget {
 }
 
 class _OpcionesScreenState extends State<OpcionesScreen> {
+
+    // Al salir de OPCIONES se guardan los ajustes en el teléfono
+  @override
+  void dispose() {
+    Progreso.instancia.guardarAjustes();
+    super.dispose();
+  }
   // Sube o baja la velocidad, siempre entre 1.0 y 20.0
   void _cambiarVelocidad(double cambio) {
     double nueva = ConfiguracionAudio.velocidad + cambio;

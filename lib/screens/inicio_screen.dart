@@ -1,5 +1,4 @@
 import 'package:material_ui/material_ui.dart';
-import '../models/nivel.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../widgets/boton_pildora.dart';
@@ -31,7 +30,7 @@ class InicioScreen extends StatelessWidget {
                   onTap: () => _abrir(
                     context,
                     const ListaCancionesScreen(
-                        titulo: 'FAVORITOS', items: favoritosDemo),
+                        titulo: 'FAVORITOS', soloFavoritos: true),
                   ),
                 ),
                 Column(
@@ -43,8 +42,7 @@ class InicioScreen extends StatelessWidget {
                         customBorder: const CircleBorder(),
                         onTap: () => _abrir(
                           context,
-                          const ListaCancionesScreen(
-                              titulo: 'NIVELES', items: niveles),
+                          const ListaCancionesScreen(titulo: 'NIVELES'),
                         ),
                         child: const SizedBox(
                           width: 90,
