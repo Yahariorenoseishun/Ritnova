@@ -1,14 +1,17 @@
-// Una nota del patrón de una canción: cuándo se toca y en qué carril
+// Una nota del patrón de una canción
 class Nota {
   final double tiempo; // segundo en que debe tocarse
   final int carril; // de 0 a 3
+  final double duracion; // 0 = tecla normal; más de 0 = tecla larga (en segundos)
 
-  const Nota(this.tiempo, this.carril);
+  const Nota(this.tiempo, this.carril, [this.duracion = 0]);
 }
 
 // Convierte un patrón escrito como texto en una lista de notas.
 // - Cada carácter es media pulsación (una corchea).
-// - 1, 2, 3, 4 = tecla en ese carril.   . = silencio.
+// - 1, 2, 3, 4 = tecla normal en ese carril.   . = silencio.
+// - a, b, c, d = tecla LARGA en el carril 1, 2, 3 o 4.
+//   Cada "-" que la sigue la alarga una corchea.
 // - La barra | y los espacios solo ordenan el texto (se ignoran).
 List<Nota> patronDesdeTexto({
   required double bpm,
@@ -18,10 +21,24 @@ List<Nota> patronDesdeTexto({
   final paso = 60 / bpm / 2; // duración de un carácter, en segundos
   final limpio = texto.replaceAll(RegExp(r'[\s|]'), '');
   final notas = <Nota>[];
-  for (int i = 0; i < limpio.length; i++) {
+  int i = 0;
+  while (i < limpio.length) {
     final c = limpio[i];
-    if (c == '1' || c == '2' || c == '3' || c == '4') {
+    if ('1234'.contains(c)) {
+      // tecla normal
       notas.add(Nota(inicio + i * paso, int.parse(c) - 1));
+      i++;
+    } else if ('abcd'.contains(c)) {
+      // tecla larga: cuenta cuántos "-" la siguen
+      int largo = 1;
+      while (i + largo < limpio.length && limpio[i + largo] == '-') {
+        largo++;
+      }
+      final carril = c.codeUnitAt(0) - 'a'.codeUnitAt(0);
+      notas.add(Nota(inicio + i * paso, carril, largo * paso));
+      i += largo; // salta los "-" que ya usó
+    } else {
+      i++; // silencio u otro carácter
     }
   }
   return notas;

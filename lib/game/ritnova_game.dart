@@ -21,6 +21,10 @@ class RitnovaGame extends FlameGame with TapCallbacks {
   static const double ventanaBad = 0.16;
   static const double ventanaToque = 0.35;
 
+  // Una tecla larga cuenta como completada si la sueltas
+  // en este último margen antes de que termine (en segundos)
+  static const double margenSoltar = 0.10;
+
   // Si sientes las teclas desfasadas de la música, ajusta este número
   // (en segundos). Positivo = la música arranca más temprano.
   static const double desfaseAudio = 0.0;
@@ -108,11 +112,15 @@ class RitnovaGame extends FlameGame with TapCallbacks {
       _iniciarMusica();
     }
 
-    // Crea las teclas que ya toca mostrar
+    // Crea las teclas que ya toca mostrar (con su duración si son largas)
     while (_siguiente < patron.length &&
         tiempo >= patron[_siguiente].tiempo - tiempoCaida) {
       final nota = patron[_siguiente];
-      add(Tecla(carril: nota.carril, tiempoObjetivo: nota.tiempo));
+      add(Tecla(
+        carril: nota.carril,
+        tiempoObjetivo: nota.tiempo,
+        duracion: nota.duracion,
+      ));
       _siguiente++;
     }
 
@@ -122,7 +130,7 @@ class RitnovaGame extends FlameGame with TapCallbacks {
     }
   }
 
-  // Se ejecuta cada vez que el jugador toca la pantalla
+  // Se ejecuta cada vez que el jugador apoya un dedo en la pantalla
   @override
   void onTapDown(TapDownEvent event) {
     if (partida.terminada) return;
@@ -150,11 +158,38 @@ class RitnovaGame extends FlameGame with TapCallbacks {
     if (elegida == null) return;
 
     elegida.resuelta = true;
-    partida.registrar(_juzgar(mejor));
-    elegida.removeFromParent();
+    final juicio = _juzgar(mejor);
+    partida.registrar(juicio);
+
+    if (elegida.esLarga) {
+      if (juicio == Juicio.perfect || juicio == Juicio.great) {
+        // Cabeza bien tocada: ahora hay que mantenerla presionada
+        elegida.sosteniendo = true;
+        elegida.dedo = event.pointerId; // recuerda cuál dedo la sostiene
+      } else {
+        elegida.fallida = true; // Bad o Miss: ya no se puede sostener
+      }
+    } else {
+      elegida.removeFromParent(); // tecla normal: desaparece al tocarla
+    }
 
     // Si el combo llegó a un hito, ¡nova!
     if (hitosCombo.contains(partida.combo)) _nova();
+  }
+
+  // El jugador levantó el dedo
+  @override
+  void onTapUp(TapUpEvent event) => _soltarDedo(event.pointerId);
+
+  // El toque se canceló (se trata igual que levantar el dedo)
+  @override
+  void onTapCancel(TapCancelEvent event) => _soltarDedo(event.pointerId);
+
+  // Avisa a la tecla larga que ese dedo ya no la está sosteniendo
+  void _soltarDedo(int dedo) {
+    for (final tecla in children.whereType<Tecla>().toList()) {
+      if (tecla.sosteniendo && tecla.dedo == dedo) tecla.soltar();
+    }
   }
 
   Juicio _juzgar(double diferencia) {

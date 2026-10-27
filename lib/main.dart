@@ -1,11 +1,14 @@
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:material_ui/material_ui.dart';
 import 'models/progreso.dart';
-import 'screens/inicio_screen.dart';
+import 'screens/splash_screen.dart';
 import 'theme/app_colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Poppins ya viene dentro de la app (assets/google_fonts): no se descarga nada
+  GoogleFonts.config.allowRuntimeFetching = false;
   // Bloquea la app en horizontal, como en tu diseño
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
@@ -30,7 +33,7 @@ class RitnovaApp extends StatelessWidget {
           secondary: AppColors.secondary,
         ),
       ),
-      home: const InicioScreen(),
+      home: const SplashScreen(),
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-// Los 4 resultados posibles de un toque
-enum Juicio { perfect, great, bad, miss }
+// Los resultados posibles. "hold" = tecla larga mantenida hasta el final.
+enum Juicio { perfect, great, bad, miss, hold }
 
 // Clase "Partida" de tu diagrama. Es un ChangeNotifier: cada vez que algo
 // cambia, avisa a la pantalla para que se actualice sola.
@@ -14,6 +14,7 @@ class Partida extends ChangeNotifier {
   int greats = 0;
   int bads = 0;
   int misses = 0;
+  int holds = 0;
   bool terminada = false;
   Juicio? ultimoJuicio; // el "?" significa que al inicio puede estar vacío
 
@@ -39,6 +40,9 @@ class Partida extends ChangeNotifier {
         vida -= 10;
         misses++;
         combo = 0;
+      case Juicio.hold:
+        puntaje += 100; // bonus por mantener la tecla larga hasta el final
+        holds++;
     }
     if (combo > comboMaximo) comboMaximo = combo;
     if (vida <= 0) {

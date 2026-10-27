@@ -76,12 +76,13 @@ class _JuegoScreenState extends State<JuegoScreen> {
     if (j == Juicio.great) return 'GREAT';
     if (j == Juicio.bad) return 'BAD';
     if (j == Juicio.miss) return 'MISS';
-    return '';
+    if (j == Juicio.hold) return 'HOLD!';    return '';
   }
 
   Color _color(Juicio? j) {
     if (j == Juicio.perfect) return AppColors.secondary;
     if (j == Juicio.great) return AppColors.primary;
+    if (j == Juicio.hold) return AppColors.secondary;
     if (j == Juicio.bad) return AppColors.textMuted;
     return AppColors.error;
   }
