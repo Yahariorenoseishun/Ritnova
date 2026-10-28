@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart' show AudioPlayer;
 import 'package:flame/events.dart';
@@ -25,10 +26,6 @@ class RitnovaGame extends FlameGame with TapCallbacks {
   // en este último margen antes de que termine (en segundos)
   static const double margenSoltar = 0.10;
 
-  // Si sientes las teclas desfasadas de la música, ajusta este número
-  // (en segundos). Positivo = la música arranca más temprano.
-  static const double desfaseAudio = 0.0;
-
   // Combos que disparan el efecto "nova"
   static const List<int> hitosCombo = [10, 25, 50, 75, 100];
 
@@ -40,6 +37,12 @@ class RitnovaGame extends FlameGame with TapCallbacks {
   bool _musicaIniciada = false;
   bool _detenido = false;
   AudioPlayer? _musica; // el reproductor de ESTA partida
+
+  // Última posición que reportó la canción, y cuándo la reportó
+  StreamSubscription<Duration>? _suscripcionPos;
+  double _posAudio = 0;
+  DateTime _momentoPos = DateTime.now();
+  bool _hayPos = false;
 
   RitnovaGame({required this.patron, this.archivoAudio});
 
@@ -62,6 +65,9 @@ class RitnovaGame extends FlameGame with TapCallbacks {
   // Segundos que tarda una tecla en caer (depende de la velocidad de OPCIONES)
   double get tiempoCaida => 25 / ConfiguracionAudio.velocidad;
 
+  // Compensación de sincronía de OPCIONES, convertida a segundos
+  double get desfase => ConfiguracionAudio.desfaseMs / 1000;
+
   double get yZona => size.y * 0.80;
 
   // x del borde de un carril. t = 0 arriba, t = 1 en la zona de toque.
@@ -80,13 +86,23 @@ class RitnovaGame extends FlameGame with TapCallbacks {
       volume: ConfiguracionAudio.volumenMusica / 100,
     );
     _musica = reproductor;
-    if (_detenido) reproductor.dispose(); // saliste antes de que arrancara
+    if (_detenido) {
+      reproductor.dispose(); // saliste antes de que arrancara
+      return;
+    }
+    // La canción avisa varias veces por segundo en qué posición va
+    _suscripcionPos = reproductor.onPositionChanged.listen((posicion) {
+      _posAudio = posicion.inMicroseconds / 1000000;
+      _momentoPos = DateTime.now();
+      _hayPos = true;
+    });
   }
 
   // Corta la música (al perder o al salir de la pantalla)
   void detener() {
     if (_detenido) return;
     _detenido = true;
+    _suscripcionPos?.cancel();
     _musica?.dispose(); // detiene y libera el reproductor
   }
 
@@ -104,10 +120,21 @@ class RitnovaGame extends FlameGame with TapCallbacks {
       return;
     }
     tiempo += dt;
+
+    // Mantiene el reloj del juego pegado a la posición real de la canción
+    if (_hayPos) {
+      final transcurrido =
+          DateTime.now().difference(_momentoPos).inMicroseconds / 1000000;
+      final posicion = _posAudio + transcurrido; // dónde va la canción ahora
+      final error = (posicion - desfase) - tiempo;
+      // Si se separan más de 80 ms, el reloj copia la posición de la canción
+      if (error.abs() > 0.08) tiempo += error;
+    }
+
     super.update(dt);
 
     // Cuando el reloj llega a 0, empieza la canción
-    if (!_musicaIniciada && archivoAudio != null && tiempo >= -desfaseAudio) {
+    if (!_musicaIniciada && archivoAudio != null && tiempo >= 0) {
       _musicaIniciada = true;
       _iniciarMusica();
     }
@@ -159,6 +186,10 @@ class RitnovaGame extends FlameGame with TapCallbacks {
 
     elegida.resuelta = true;
     final juicio = _juzgar(mejor);
+    // Guarda si tocaste tarde (+) o temprano (-), para el promedio de RESULTADO
+    if (juicio != Juicio.miss) {
+      partida.registrarDiferencia(tiempo - elegida.tiempoObjetivo);
+    }
     partida.registrar(juicio);
 
     if (elegida.esLarga) {

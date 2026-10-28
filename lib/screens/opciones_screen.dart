@@ -1,10 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 import '../models/configuracion_audio.dart';
+import '../models/progreso.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../widgets/barra_titulo.dart';
 import '../widgets/control_volumen.dart';
-import '../models/progreso.dart';
 
 class OpcionesScreen extends StatefulWidget {
   const OpcionesScreen({super.key});
@@ -14,13 +14,13 @@ class OpcionesScreen extends StatefulWidget {
 }
 
 class _OpcionesScreenState extends State<OpcionesScreen> {
-
-    // Al salir de OPCIONES se guardan los ajustes en el teléfono
+  // Al salir de OPCIONES se guardan los ajustes en el teléfono
   @override
   void dispose() {
     Progreso.instancia.guardarAjustes();
     super.dispose();
   }
+
   // Sube o baja la velocidad, siempre entre 1.0 y 20.0
   void _cambiarVelocidad(double cambio) {
     double nueva = ConfiguracionAudio.velocidad + cambio;
@@ -28,6 +28,16 @@ class _OpcionesScreenState extends State<OpcionesScreen> {
     if (nueva > 20.0) nueva = 20.0;
     setState(() {
       ConfiguracionAudio.velocidad = nueva;
+    });
+  }
+
+  // Sube o baja la sincronía, siempre entre -300 y 300 ms
+  void _cambiarDesfase(double cambio) {
+    double nuevo = ConfiguracionAudio.desfaseMs + cambio;
+    if (nuevo < -300) nuevo = -300;
+    if (nuevo > 300) nuevo = 300;
+    setState(() {
+      ConfiguracionAudio.desfaseMs = nuevo;
     });
   }
 
@@ -55,6 +65,9 @@ class _OpcionesScreenState extends State<OpcionesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final d = ConfiguracionAudio.desfaseMs.round();
+    final textoDesfase = d > 0 ? '+$d ms' : '$d ms';
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -99,6 +112,34 @@ class _OpcionesScreenState extends State<OpcionesScreen> {
                             _botonCirculo('+', () => _cambiarVelocidad(0.5)),
                           ],
                         ),
+                        const SizedBox(height: 16),
+                        Text('SINCRONÍA', style: AppText.etiqueta),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _botonCirculo('-', () => _cambiarDesfase(-10)),
+                            const SizedBox(width: 24),
+                            SizedBox(
+                              width: 100,
+                              child: Text(
+                                textoDesfase,
+                                textAlign: TextAlign.center,
+                                style: AppText.subtitulo
+                                    .copyWith(color: AppColors.primary),
+                              ),
+                            ),
+                            const SizedBox(width: 24),
+                            _botonCirculo('+', () => _cambiarDesfase(10)),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Si oyes el sonido tarde, súbelo.',
+                          style: AppText.etiqueta.copyWith(
+                              fontSize: 12, color: AppColors.textMuted),
+                        ),
+                        const SizedBox(height: 16),
                       ],
                     ),
                   ),

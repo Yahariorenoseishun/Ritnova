@@ -19,6 +19,7 @@ class Progreso extends ChangeNotifier {
     ConfiguracionAudio.volumenMusica = _prefs.getDouble('volumenMusica') ?? 80;
     ConfiguracionAudio.volumenEfectos = _prefs.getDouble('volumenEfectos') ?? 50;
     ConfiguracionAudio.velocidad = _prefs.getDouble('velocidad') ?? 10.0;
+    ConfiguracionAudio.desfaseMs = _prefs.getDouble('desfaseMs') ?? 0;
   }
 
   // ---------- Ajustes ----------
@@ -26,6 +27,7 @@ class Progreso extends ChangeNotifier {
     _prefs.setDouble('volumenMusica', ConfiguracionAudio.volumenMusica);
     _prefs.setDouble('volumenEfectos', ConfiguracionAudio.volumenEfectos);
     _prefs.setDouble('velocidad', ConfiguracionAudio.velocidad);
+    _prefs.setDouble('desfaseMs', ConfiguracionAudio.desfaseMs);
   }
 
   // ---------- Favoritos (por id del nivel) ----------

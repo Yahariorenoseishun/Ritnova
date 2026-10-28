@@ -96,7 +96,9 @@ class ResultadoScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   'Perfect ${partida.perfects}  ·  Great ${partida.greats}  ·  '
-                  'Bad ${partida.bads}  ·  Miss ${partida.misses}',
+                  'Bad ${partida.bads}  ·  Miss ${partida.misses}\n'
+                  'Promedio de tus toques: ${partida.promedioMs > 0 ? '+' : ''}${partida.promedioMs} ms',
+                  textAlign: TextAlign.center,
                   style: AppText.etiqueta
                       .copyWith(fontSize: 12, color: AppColors.textMuted),
                 ),

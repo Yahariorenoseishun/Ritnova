@@ -15,6 +15,8 @@ class Partida extends ChangeNotifier {
   int bads = 0;
   int misses = 0;
   int holds = 0;
+  double _sumaDiferencias = 0; // suma de qué tan tarde (+) o temprano (-) tocaste
+  int _cantidadDiferencias = 0;
   bool terminada = false;
   Juicio? ultimoJuicio; // el "?" significa que al inicio puede estar vacío
 
@@ -52,8 +54,16 @@ class Partida extends ChangeNotifier {
     notifyListeners(); // avisa a la pantalla que hubo cambios
   }
 
-  // Se usa cuando se acaban las notas
-  void terminar() {
+  // Guarda qué tan lejos del momento exacto fue un toque (en segundos; + = tarde)
+  void registrarDiferencia(double segundos) {
+    _sumaDiferencias += segundos;
+    _cantidadDiferencias++;
+  }
+
+  // Promedio de todos tus toques, en milisegundos (sirve para calibrar)
+  int get promedioMs => _cantidadDiferencias == 0
+      ? 0
+      : (_sumaDiferencias / _cantidadDiferencias * 1000).round();  void terminar() {
     terminada = true;
     notifyListeners();
   }
