@@ -19,20 +19,22 @@ class ResultadoScreen extends StatelessWidget {
     required this.esRecord,
   });
 
-  // Tarjeta con un número grande y su etiqueta (PTS, COMBO, FAILS)
-  Widget _tarjeta(String valor, String etiqueta, Color color) {
+  // Tarjeta horizontal: etiqueta a la izquierda y valor a la derecha
+  Widget _fila(String etiqueta, String valor, Color color) {
     return Container(
-      width: 110,
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      width: 240,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(valor, style: AppText.subtitulo.copyWith(color: color)),
           Text(etiqueta, style: AppText.etiqueta),
+          Text(valor,
+              style: AppText.etiqueta.copyWith(fontSize: 20, color: color)),
         ],
       ),
     );
@@ -42,72 +44,93 @@ class ResultadoScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final completado = partida.vida > 0; // si te quedó vida, terminaste la canción
     final mejor = Progreso.instancia.mejorPuntaje(nivel.id);
+    final prom = partida.promedioMs;
+    final textoProm = prom > 0 ? '+$prom' : '$prom';
+
     return Scaffold(
       body: SafeArea(
         child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                Text(completado ? 'NIVEL COMPLETADO' : 'RESULTADO',
-                    style: AppText.titulo),
-                // Récord nuevo, o el mejor puntaje de este nivel
-                Text(
-                  esRecord ? '¡NUEVO RÉCORD!' : 'MEJOR: $mejor',
-                  style: AppText.etiqueta.copyWith(
-                    color: esRecord ? AppColors.secondary : AppColors.textMuted,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                // Botón circular: vuelve a jugar el mismo nivel
-                Material(
-                  color: AppColors.primary,
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    customBorder: const CircleBorder(),
-                    onTap: () => Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => JuegoScreen(nivel: nivel)),
-                    ),
-                    child: const SizedBox(
-                      width: 80,
-                      height: 80,
-                      child: Icon(Icons.refresh,
-                          size: 52, color: AppColors.base),
+          // FittedBox encoge el contenido si no cabe, así no hace falta scroll
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(completado ? 'NIVEL COMPLETADO' : 'RESULTADO',
+                      style: AppText.titulo),
+                  Text(
+                    esRecord ? '¡NUEVO RÉCORD!' : 'MEJOR: $mejor',
+                    style: AppText.etiqueta.copyWith(
+                      color:
+                          esRecord ? AppColors.secondary : AppColors.textMuted,
                     ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text('REINICIAR',
-                    style:
-                        AppText.etiqueta.copyWith(color: AppColors.primary)),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _tarjeta('${partida.puntaje}', 'PTS', AppColors.secondary),
-                    const SizedBox(width: 16),
-                    _tarjeta(
-                        '${partida.comboMaximo}', 'COMBO', AppColors.primary),
-                    const SizedBox(width: 16),
-                    _tarjeta('${partida.fallos}', 'FAILS', AppColors.error),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Perfect ${partida.perfects}  ·  Great ${partida.greats}  ·  '
-                  'Bad ${partida.bads}  ·  Miss ${partida.misses}\n'
-                  'Promedio de tus toques: ${partida.promedioMs > 0 ? '+' : ''}${partida.promedioMs} ms',
-                  textAlign: TextAlign.center,
-                  style: AppText.etiqueta
-                      .copyWith(fontSize: 12, color: AppColors.textMuted),
-                ),
-                const SizedBox(height: 12),
-                BotonPildora(
-                  texto: 'SALIR',
-                  onTap: () => Navigator.pop(context), // vuelve a la lista de niveles
-                ),
-              ],
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Izquierda: reiniciar el mismo nivel
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Material(
+                            color: AppColors.primary,
+                            shape: const CircleBorder(),
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: () => Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => JuegoScreen(nivel: nivel)),
+                              ),
+                              child: const SizedBox(
+                                width: 100,
+                                height: 100,
+                                child: Icon(Icons.refresh,
+                                    size: 64, color: AppColors.base),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text('REINICIAR',
+                              style: AppText.etiqueta
+                                  .copyWith(color: AppColors.primary)),
+                        ],
+                      ),
+                      const SizedBox(width: 48),
+                      // Derecha: datos de la partida y salir
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _fila('PTS', '${partida.puntaje}', AppColors.secondary),
+                          _fila('COMBO', '${partida.comboMaximo}',
+                              AppColors.primary),
+                          _fila('FAILS', '${partida.fallos}', AppColors.error),
+                          SizedBox(
+                            width: 240,
+                            child: Text(
+                              'Perfect ${partida.perfects} · Great ${partida.greats}\n'
+                              'Bad ${partida.bads} · Miss ${partida.misses}\n'
+                              'Promedio de tus toques: $textoProm ms',
+                              textAlign: TextAlign.center,
+                              style: AppText.etiqueta.copyWith(
+                                  fontSize: 12, color: AppColors.textMuted),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          BotonPildora(
+                            texto: 'SALIR',
+                            onTap: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -115,3 +138,5 @@ class ResultadoScreen extends StatelessWidget {
     );
   }
 }
+
+

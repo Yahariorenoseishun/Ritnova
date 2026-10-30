@@ -1,10 +1,13 @@
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:material_ui/material_ui.dart';
 import '../models/configuracion_audio.dart';
 import '../models/progreso.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../widgets/barra_titulo.dart';
+import '../widgets/boton_pildora.dart';
 import '../widgets/control_volumen.dart';
+import 'grabacion_screen.dart';
 
 class OpcionesScreen extends StatefulWidget {
   const OpcionesScreen({super.key});
@@ -75,11 +78,14 @@ class _OpcionesScreenState extends State<OpcionesScreen> {
           children: [
             const BarraTitulo(titulo: 'OPCIONES'),
             Expanded(
-              child: SingleChildScrollView(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
+              child: Center(
+                // FittedBox encoge el contenido si no cabe: así no hace falta scroll
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: SizedBox(
+                    width: 420,
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         ControlVolumen(
                           titulo: 'VOL. MÚSICA',
@@ -139,7 +145,19 @@ class _OpcionesScreenState extends State<OpcionesScreen> {
                           style: AppText.etiqueta.copyWith(
                               fontSize: 12, color: AppColors.textMuted),
                         ),
-                        const SizedBox(height: 16),
+                        // Herramienta de desarrollo: no aparece en el APK de release
+                        if (!kReleaseMode) ...[
+                          const SizedBox(height: 14),
+                          BotonPildora(
+                            texto: 'GRABAR PATRÓN',
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const GrabacionScreen()),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 8),
                       ],
                     ),
                   ),
