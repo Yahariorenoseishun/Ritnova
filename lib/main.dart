@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:material_ui/material_ui.dart';
+import 'models/catalogo.dart';
 import 'models/progreso.dart';
 import 'screens/splash_screen.dart';
 import 'theme/app_colors.dart';
@@ -15,6 +16,7 @@ void main() async {
     DeviceOrientation.landscapeRight,
   ]);
   await Progreso.instancia.cargar(); // lee lo guardado antes de mostrar nada
+  await Catalogo.cargar(); // lee los niveles de assets/niveles
   runApp(const RitnovaApp());
 }
 

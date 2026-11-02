@@ -147,6 +147,9 @@ class RitnovaGame extends FlameGame with TapCallbacks {
         carril: nota.carril,
         tiempoObjetivo: nota.tiempo,
         duracion: nota.duracion,
+        ancho: nota.ancho,
+        tipo: nota.tipo,
+        texto: nota.texto,
       ));
       _siguiente++;
     }
@@ -175,7 +178,8 @@ class RitnovaGame extends FlameGame with TapCallbacks {
     Tecla? elegida;
     double mejor = ventanaToque;
     for (final tecla in children.whereType<Tecla>()) {
-      if (tecla.carril != carril || tecla.resuelta) continue;
+      // Una tecla ancha se toca en cualquiera de los carriles que cubre
+      if (carril < tecla.carril || carril >= tecla.carril + tecla.ancho || tecla.resuelta) continue;
       final diferencia = (tiempo - tecla.tiempoObjetivo).abs();
       if (diferencia <= mejor) {
         mejor = diferencia;

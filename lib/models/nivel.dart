@@ -8,9 +8,6 @@ class Nivel {
   const Nivel(this.id, this.nombre, this.dificultad, this.cancionId);
 }
 
-// Catálogo de niveles. Por ahora todos usan la canción demo.
-const niveles = [
-  Nivel('music-1', 'MUSIC-1', 2, 'demo'),
-  Nivel('music-2', 'MUSIC-2', 4, 'demo'),
-  Nivel('music-3', 'MUSIC-3', 3, 'demo'),
-];
+// Lista de niveles. Se llena sola al abrir la app, leyendo los archivos
+// de la carpeta assets/niveles (ver catalogo.dart).
+final List<Nivel> niveles = [];

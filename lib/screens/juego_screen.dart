@@ -92,7 +92,24 @@ class _JuegoScreenState extends State<JuegoScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          Positioned.fill(child: GameWidget(game: _juego)),
+          Positioned.fill(
+            child: GameWidget(
+              game: _juego,
+              // Si algo falla al cargar el nivel, se muestra un mensaje claro
+              errorBuilder: (context, error) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Text(
+                    'No se pudo cargar este nivel.\n'
+                    'Revisa que el audio y el archivo .json existan y se llamen igual.\n\n'
+                    '$error',
+                    textAlign: TextAlign.center,
+                    style: AppText.etiqueta.copyWith(color: AppColors.error),
+                  ),
+                ),
+              ),
+            ),
+          ),
           Positioned.fill(
             child: SafeArea(
               child: Padding(

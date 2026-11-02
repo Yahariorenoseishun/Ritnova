@@ -1,13 +1,10 @@
-import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:material_ui/material_ui.dart';
 import '../models/configuracion_audio.dart';
 import '../models/progreso.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../widgets/barra_titulo.dart';
-import '../widgets/boton_pildora.dart';
 import '../widgets/control_volumen.dart';
-import 'grabacion_screen.dart';
 
 class OpcionesScreen extends StatefulWidget {
   const OpcionesScreen({super.key});
@@ -145,18 +142,6 @@ class _OpcionesScreenState extends State<OpcionesScreen> {
                           style: AppText.etiqueta.copyWith(
                               fontSize: 12, color: AppColors.textMuted),
                         ),
-                        // Herramienta de desarrollo: no aparece en el APK de release
-                        if (!kReleaseMode) ...[
-                          const SizedBox(height: 14),
-                          BotonPildora(
-                            texto: 'GRABAR PATRÓN',
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const GrabacionScreen()),
-                            ),
-                          ),
-                        ],
                         const SizedBox(height: 8),
                       ],
                     ),

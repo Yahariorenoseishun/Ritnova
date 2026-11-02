@@ -43,8 +43,9 @@ class ListaCancionesScreen extends StatelessWidget {
                       if (items.isEmpty) {
                         return Center(
                           child: Text(
-                            'Aún no tienes favoritos.\n'
-                            'Toca el corazón de un nivel para agregarlo.',
+                            soloFavoritos
+                                ? 'Aún no tienes favoritos.\nToca el corazón de un nivel para agregarlo.'
+                                : 'No hay niveles cargados.\nRevisa la carpeta assets/niveles y reinicia la app.',
                             textAlign: TextAlign.center,
                             style: AppText.contenido
                                 .copyWith(color: AppColors.textMuted),
