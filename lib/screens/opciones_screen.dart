@@ -21,11 +21,11 @@ class _OpcionesScreenState extends State<OpcionesScreen> {
     super.dispose();
   }
 
-  // Sube o baja la velocidad, siempre entre 1.0 y 20.0
+  // Sube o baja la velocidad, siempre entre 1.0 y 30.0
   void _cambiarVelocidad(double cambio) {
     double nueva = ConfiguracionAudio.velocidad + cambio;
     if (nueva < 1.0) nueva = 1.0;
-    if (nueva > 20.0) nueva = 20.0;
+    if (nueva > 30.0) nueva = 30.0;
     setState(() {
       ConfiguracionAudio.velocidad = nueva;
     });

@@ -16,6 +16,9 @@ class Tecla extends Component with HasGameReference<RitnovaGame> {
     Color(0xFF5BE08A),
   ];
 
+    // Poner en true para ver la sílaba escrita sobre cada tecla
+  static const bool mostrarTexto = false;
+
   final int carril; // carril donde empieza
   final int ancho; // cuántos carriles cubre
   final int tipo;
@@ -167,7 +170,7 @@ class Tecla extends Component with HasGameReference<RitnovaGame> {
 
     // La sílaba, escrita encima de la tecla
     final parrafo = _parrafo;
-    if (parrafo != null && !fallida) {
+    if (mostrarTexto && parrafo != null && !fallida) {
       final escala = unidad / 170; // el texto crece al acercarse, igual que la tecla
       canvas.save();
       canvas.translate(

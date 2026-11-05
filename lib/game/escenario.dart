@@ -29,13 +29,15 @@ class Escenario extends Component with HasGameReference<RitnovaGame> {
       );
     }
 
-    // Barra de la zona de toque (rectángulo redondeado naranja)
+    // Barra de la zona de toque: queda dentro de las líneas de los carriles
+    // (se deja la mitad del grosor de la línea para que no se salga)
+    final mitad = _zona.strokeWidth / 2;
     final barra = RRect.fromLTRBR(
-      game.xBorde(0, 1) - 10,
-      game.yZona - 14,
-      game.xBorde(RitnovaGame.carriles, 1) + 10,
-      game.yZona + 14,
-      const Radius.circular(14),
+      game.xBorde(0, 1) + mitad,
+      game.yZona - 12,
+      game.xBorde(RitnovaGame.carriles, 1) - mitad,
+      game.yZona + 12,
+      const Radius.circular(6),
     );
     canvas.drawRRect(barra, _zona);
   }

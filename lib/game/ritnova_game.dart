@@ -36,6 +36,7 @@ class RitnovaGame extends FlameGame with TapCallbacks {
   int _siguiente = 0; // cuál es la próxima nota por mostrar
   bool _musicaIniciada = false;
   bool _detenido = false;
+  bool _pausado = false;
   AudioPlayer? _musica; // el reproductor de ESTA partida
 
   // Última posición que reportó la canción, y cuándo la reportó
@@ -90,7 +91,7 @@ class RitnovaGame extends FlameGame with TapCallbacks {
       reproductor.dispose(); // saliste antes de que arrancara
       return;
     }
-    // La canción avisa varias veces por segundo en qué posición va
+        if (_pausado) reproductor.pause(); // si pausaste mientras cargaba, no suena
     _suscripcionPos = reproductor.onPositionChanged.listen((posicion) {
       _posAudio = posicion.inMicroseconds / 1000000;
       _momentoPos = DateTime.now();
@@ -106,7 +107,28 @@ class RitnovaGame extends FlameGame with TapCallbacks {
     _musica?.dispose(); // detiene y libera el reproductor
   }
 
-  // Efecto nova: sonido más anillos de luz
+  // Pausa: detiene el reloj, las teclas y la música
+  void pausar() {
+    if (_pausado || partida.terminada) return;
+    _pausado = true;
+    pauseEngine();
+    _hayPos = false; // al volver se espera una posición nueva de la canción
+    _musica?.pause();
+  }
+
+  // Reanuda todo justo donde se quedó
+  void reanudar() {
+    if (!_pausado) return;
+    _pausado = false;
+    _musica?.resume();
+    resumeEngine();
+  }
+
+  // Flame pausaba y reanudaba el juego solo al salir de la app.
+  // Ahora lo controla JuegoScreen para que la música se detenga junto con él.
+  // ignore: must_call_super
+  @override
+  void lifecycleStateChange(AppLifecycleState state) {}
   void _nova() {
     add(NovaEfecto());
     FlameAudio.play('nova.wav', volume: ConfiguracionAudio.volumenEfectos / 100);
