@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' show AppLifecycleState;
 import 'package:flame/game.dart' show GameWidget;
 import 'package:material_ui/material_ui.dart';
+import '../audio/musica_menu.dart';
 import '../game/ritnova_game.dart';
 import '../models/cancion.dart';
 import '../models/nivel.dart';
@@ -11,6 +12,7 @@ import '../models/progreso.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../widgets/boton_pildora.dart';
+import '../widgets/celebracion_fin.dart';
 import 'resultado_screen.dart';
 
 class JuegoScreen extends StatefulWidget {
@@ -35,6 +37,7 @@ class _JuegoScreenState extends State<JuegoScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    MusicaMenu.pedirSilencio(); // la música del menú se calla mientras juegas
     // Busca la canción del nivel y le pasa su patrón y su audio al juego
     final cancion = canciones[widget.nivel.cancionId];
     _juego = RitnovaGame(
@@ -99,7 +102,9 @@ class _JuegoScreenState extends State<JuegoScreen> with WidgetsBindingObserver {
         _esRecord = Progreso.instancia
             .registrarPuntaje(widget.nivel.id, _juego.partida.puntaje);
       }
-      Future.delayed(const Duration(milliseconds: 1800), _irAResultado);
+      // Si completaste, se deja más tiempo para disfrutar la animación
+      final espera = _juego.partida.vida > 0 ? 3200 : 1800;
+      Future.delayed(Duration(milliseconds: espera), _irAResultado);
     }
   }
 
@@ -123,7 +128,22 @@ class _JuegoScreenState extends State<JuegoScreen> with WidgetsBindingObserver {
     _reloj?.cancel();
     _juego.partida.removeListener(_alCambiarPartida);
     _juego.detener(); // por si sales con la música sonando
+    MusicaMenu.liberarSilencio(); // vuelve la música del menú
     super.dispose();
+  }
+
+  // Mensaje del final según cómo te fue: título, subtítulo y color
+  (String, String, Color) _mensajeFin(Partida p) {
+    if (p.vida <= 0) {
+      return ('NIVEL FALLIDO', 'Inténtalo de nuevo', AppColors.error);
+    }
+    if (p.perfects > 0 && p.greats == 0 && p.bads == 0 && p.misses == 0) {
+      return ('ALL PERFECT', '¡Ni un solo fallo!', AppColors.secondary);
+    }
+    if (p.bads == 0 && p.misses == 0) {
+      return ('FULL COMBO', 'Sin fallos', AppColors.secondary);
+    }
+    return ('NIVEL COMPLETADO', '¡Buen trabajo!', AppColors.primary);
   }
 
   String _texto(Juicio? j) {
@@ -229,7 +249,7 @@ class _JuegoScreenState extends State<JuegoScreen> with WidgetsBindingObserver {
                             child: IconButton(
                               icon: const Icon(Icons.pause_circle_filled,
                                   color: AppColors.text, size: 40),
-                              onPressed: _pausar, // ahora pausa de verdad
+                              onPressed: _pausar,
                             ),
                           ),
                           Align(
@@ -238,15 +258,25 @@ class _JuegoScreenState extends State<JuegoScreen> with WidgetsBindingObserver {
                                 style: AppText.titulo
                                     .copyWith(color: _color(p.ultimoJuicio))),
                           ),
-                          if (p.terminada)
-                            Center(
-                              child: Text(p.vida > 0 ? 'COMPLETADO' : 'FIN',
-                                  style: AppText.titulo),
-                            ),
                         ],
                       );
                     },
                   ),
+                ),
+              ),
+            ),
+            // Animación al terminar el nivel (cubre toda la pantalla)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: ListenableBuilder(
+                  listenable: _juego.partida,
+                  builder: (context, _) {
+                    final p = _juego.partida;
+                    if (!p.terminada) return const SizedBox.shrink();
+                    final m = _mensajeFin(p);
+                    return CelebracionFin(
+                        titulo: m.$1, subtitulo: m.$2, color: m.$3);
+                  },
                 ),
               ),
             ),

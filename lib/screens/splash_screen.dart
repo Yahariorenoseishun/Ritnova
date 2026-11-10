@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import '../theme/app_colors.dart';
+import '../audio/musica_menu.dart';
 import 'inicio_screen.dart';
 
 // Pantalla de carga: el logo y una barra de 10 segmentos que se va llenando
@@ -19,7 +20,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Cada 220 ms se llena un segmento más; al terminar pasa a INICIO
+    MusicaMenu.iniciar(); // empieza la música de los menús
     _reloj = Timer.periodic(const Duration(milliseconds: 220), (timer) {
       if (_llenos < total) {
         setState(() => _llenos++);

@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import '../audio/musica_menu.dart';
 import '../models/configuracion_audio.dart';
 import '../models/progreso.dart';
 import '../theme/app_colors.dart';
@@ -89,6 +90,7 @@ class _OpcionesScreenState extends State<OpcionesScreen> {
                           valor: ConfiguracionAudio.volumenMusica,
                           onChanged: (v) => setState(() {
                             ConfiguracionAudio.volumenMusica = v;
+                            MusicaMenu.actualizarVolumen(); // se oye el cambio al instante
                           }),
                         ),
                         ControlVolumen(

@@ -91,8 +91,10 @@ class RitnovaGame extends FlameGame with TapCallbacks {
       reproductor.dispose(); // saliste antes de que arrancara
       return;
     }
-        if (_pausado) reproductor.pause(); // si pausaste mientras cargaba, no suena
+    if (_pausado) reproductor.pause(); // si pausaste mientras cargaba, no suena
+    // La canción avisa varias veces por segundo en qué posición va
     _suscripcionPos = reproductor.onPositionChanged.listen((posicion) {
+      if (_pausado) return; // en pausa no se guarda ninguna posición
       _posAudio = posicion.inMicroseconds / 1000000;
       _momentoPos = DateTime.now();
       _hayPos = true;
@@ -112,7 +114,7 @@ class RitnovaGame extends FlameGame with TapCallbacks {
     if (_pausado || partida.terminada) return;
     _pausado = true;
     pauseEngine();
-    _hayPos = false; // al volver se espera una posición nueva de la canción
+    _hayPos = false; // se olvida la posición vieja de la canción
     _musica?.pause();
   }
 
@@ -120,6 +122,7 @@ class RitnovaGame extends FlameGame with TapCallbacks {
   void reanudar() {
     if (!_pausado) return;
     _pausado = false;
+    _hayPos = false; // se espera una posición nueva antes de volver a sincronizar
     _musica?.resume();
     resumeEngine();
   }
@@ -129,9 +132,24 @@ class RitnovaGame extends FlameGame with TapCallbacks {
   // ignore: must_call_super
   @override
   void lifecycleStateChange(AppLifecycleState state) {}
+
+  // Efecto nova: sonido más anillos de luz
   void _nova() {
     add(NovaEfecto());
     FlameAudio.play('nova.wav', volume: ConfiguracionAudio.volumenEfectos / 100);
+  }
+
+  // Mantiene el reloj del juego pegado a la posición real de la canción
+  void _sincronizarConMusica() {
+    if (!_hayPos) return;
+    final transcurrido =
+        DateTime.now().difference(_momentoPos).inMicroseconds / 1000000;
+    if (transcurrido > 0.7) return; // posición muy vieja: no se usa
+    final posicion = _posAudio + transcurrido; // dónde va la canción ahora
+    final error = (posicion - desfase) - tiempo;
+    // Si se separan más de 80 ms, el reloj copia la posición de la canción
+    // (pero nunca se acepta un salto de más de 2 segundos)
+    if (error.abs() > 0.08 && error.abs() < 2.0) tiempo += error;
   }
 
   @override
@@ -141,19 +159,12 @@ class RitnovaGame extends FlameGame with TapCallbacks {
       pauseEngine();
       return;
     }
-    tiempo += dt;
-
-    // Mantiene el reloj del juego pegado a la posición real de la canción
-    if (_hayPos) {
-      final transcurrido =
-          DateTime.now().difference(_momentoPos).inMicroseconds / 1000000;
-      final posicion = _posAudio + transcurrido; // dónde va la canción ahora
-      final error = (posicion - desfase) - tiempo;
-      // Si se separan más de 80 ms, el reloj copia la posición de la canción
-      if (error.abs() > 0.08) tiempo += error;
-    }
-
-    super.update(dt);
+    // Si pasó demasiado tiempo entre dos vueltas (por ejemplo al reanudar),
+    // se limita para que el reloj no dé un salto
+    final paso = dt > 0.1 ? 0.1 : dt;
+    tiempo += paso;
+    _sincronizarConMusica();
+    super.update(paso);
 
     // Cuando el reloj llega a 0, empieza la canción
     if (!_musicaIniciada && archivoAudio != null && tiempo >= 0) {
@@ -185,7 +196,7 @@ class RitnovaGame extends FlameGame with TapCallbacks {
   // Se ejecuta cada vez que el jugador apoya un dedo en la pantalla
   @override
   void onTapDown(TapDownEvent event) {
-    if (partida.terminada) return;
+    if (partida.terminada || _pausado) return;
     final x = event.localPosition.x;
     final t = event.localPosition.y / yZona;
 
@@ -201,7 +212,11 @@ class RitnovaGame extends FlameGame with TapCallbacks {
     double mejor = ventanaToque;
     for (final tecla in children.whereType<Tecla>()) {
       // Una tecla ancha se toca en cualquiera de los carriles que cubre
-      if (carril < tecla.carril || carril >= tecla.carril + tecla.ancho || tecla.resuelta) continue;
+      if (carril < tecla.carril ||
+          carril >= tecla.carril + tecla.ancho ||
+          tecla.resuelta) {
+        continue;
+      }
       final diferencia = (tiempo - tecla.tiempoObjetivo).abs();
       if (diferencia <= mejor) {
         mejor = diferencia;
