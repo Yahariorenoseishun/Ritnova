@@ -223,6 +223,15 @@ class ResultadoScreen extends StatelessWidget {
                     Text(subtitulo,
                         style: AppText.etiqueta
                             .copyWith(color: AppColors.textMuted)),
+                    if (partida.habilidades.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          '${partida.habilidades.join('  ·  ')}   ×${partida.multiplicador.toStringAsFixed(2)}',
+                          style: AppText.etiqueta.copyWith(
+                              fontSize: 12, color: AppColors.secondary),
+                        ),
+                      ),
                     const SizedBox(height: 14),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,

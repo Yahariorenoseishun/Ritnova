@@ -45,7 +45,10 @@ class FilaCancion extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(nivel.nombre, style: AppText.etiqueta),
+                    Text(nivel.nombre,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.etiqueta),
                     // El mejor puntaje solo aparece si ya jugaste ese nivel
                     if (mejor > 0)
                       Text(

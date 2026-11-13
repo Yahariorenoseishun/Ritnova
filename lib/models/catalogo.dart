@@ -70,6 +70,10 @@ class Catalogo {
         debugPrint('No se pudo leer $ruta: $e');
       }
     }
+    // Orden: primero los más fáciles; si empatan, por nombre
+    niveles.sort((a, b) => a.dificultad != b.dificultad
+        ? a.dificultad.compareTo(b.dificultad)
+        : a.nombre.compareTo(b.nombre));
     debugPrint('Niveles cargados: ${niveles.length}');
   }
 }

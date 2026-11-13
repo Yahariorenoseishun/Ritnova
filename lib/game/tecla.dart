@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'dart:ui' as ui;
 import 'package:flame/components.dart';
+import '../models/habilidades.dart';
 import '../models/partida.dart';
 import '../theme/app_colors.dart';
 import 'ritnova_game.dart';
@@ -93,7 +94,9 @@ class Tecla extends Component with HasGameReference<RitnovaGame> {
     progresoCola = 1 - (tiempoFin - t) / game.tiempoCaida;
 
     // La cabeza pasó de largo sin que la tocaran: Miss
-    if (!resuelta && t - tiempoObjetivo > RitnovaGame.ventanaBad) {
+    if (!resuelta &&
+        t - tiempoObjetivo >
+            RitnovaGame.ventanaBad * Habilidades.factorVentana) {
       resuelta = true;
       fallida = true;
       game.partida.registrar(Juicio.miss);

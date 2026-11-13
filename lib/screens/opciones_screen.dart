@@ -5,7 +5,9 @@ import '../models/progreso.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../widgets/barra_titulo.dart';
+import '../widgets/boton_pildora.dart';
 import '../widgets/control_volumen.dart';
+import 'habilidades_screen.dart';
 
 class OpcionesScreen extends StatefulWidget {
   const OpcionesScreen({super.key});
@@ -143,6 +145,15 @@ class _OpcionesScreenState extends State<OpcionesScreen> {
                           'Si oyes el sonido tarde, súbelo.',
                           style: AppText.etiqueta.copyWith(
                               fontSize: 12, color: AppColors.textMuted),
+                        ),
+                        const SizedBox(height: 14),
+                        BotonPildora(
+                          texto: 'HABILIDADES',
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const HabilidadesScreen()),
+                          ),
                         ),
                         const SizedBox(height: 8),
                       ],

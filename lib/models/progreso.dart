@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'configuracion_audio.dart';
+import 'habilidades.dart';
 
 // Guarda y lee lo que debe quedarse en el teléfono:
 // ajustes, favoritos y mejores puntajes.
@@ -19,7 +20,12 @@ class Progreso extends ChangeNotifier {
     ConfiguracionAudio.volumenMusica = _prefs.getDouble('volumenMusica') ?? 80;
     ConfiguracionAudio.volumenEfectos = _prefs.getDouble('volumenEfectos') ?? 50;
     ConfiguracionAudio.velocidad = _prefs.getDouble('velocidad') ?? 10.0;
-    ConfiguracionAudio.desfaseMs = _prefs.getDouble('desfaseMs') ?? 0;
+    Habilidades.concentracion = _prefs.getBool('hab_concentracion') ?? false;
+    Habilidades.comboExperto = _prefs.getBool('hab_comboExperto') ?? false;
+    Habilidades.margenAmplio = _prefs.getBool('hab_margenAmplio') ?? false;
+    Habilidades.nerviosismo = _prefs.getBool('hab_nerviosismo') ?? false;
+    Habilidades.precision = _prefs.getBool('hab_precision') ?? false;
+    Habilidades.rompeCombos = _prefs.getBool('hab_rompeCombos') ?? false;
   }
 
   // ---------- Ajustes ----------
@@ -30,7 +36,15 @@ class Progreso extends ChangeNotifier {
     _prefs.setDouble('desfaseMs', ConfiguracionAudio.desfaseMs);
   }
 
-  // ---------- Favoritos (por id del nivel) ----------
+  // ---------- Habilidades ----------
+  void guardarHabilidades() {
+    _prefs.setBool('hab_concentracion', Habilidades.concentracion);
+    _prefs.setBool('hab_comboExperto', Habilidades.comboExperto);
+    _prefs.setBool('hab_margenAmplio', Habilidades.margenAmplio);
+    _prefs.setBool('hab_nerviosismo', Habilidades.nerviosismo);
+    _prefs.setBool('hab_precision', Habilidades.precision);
+    _prefs.setBool('hab_rompeCombos', Habilidades.rompeCombos);
+  }
   bool esFavorito(String idNivel) => _favoritos.contains(idNivel);
 
   void alternarFavorito(String idNivel) {

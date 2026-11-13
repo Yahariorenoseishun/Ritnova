@@ -234,7 +234,7 @@ class _JuegoScreenState extends State<JuegoScreen> with WidgetsBindingObserver {
                                 SizedBox(
                                   width: 160,
                                   child: LinearProgressIndicator(
-                                    value: p.vida / 100,
+                                    value: p.vida / Partida.vidaMaxima,
                                     minHeight: 10,
                                     color: AppColors.primary,
                                     backgroundColor: AppColors.surface,

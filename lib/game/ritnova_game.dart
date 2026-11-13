@@ -5,6 +5,7 @@ import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame_audio/flame_audio.dart';
 import '../models/configuracion_audio.dart';
+import '../models/habilidades.dart';
 import '../models/nota.dart';
 import '../models/partida.dart';
 import '../theme/app_colors.dart';
@@ -64,7 +65,8 @@ class RitnovaGame extends FlameGame with TapCallbacks {
   }
 
   // Segundos que tarda una tecla en caer (depende de la velocidad de OPCIONES)
-  double get tiempoCaida => 25 / ConfiguracionAudio.velocidad;
+  double get tiempoCaida =>
+      25 / (ConfiguracionAudio.velocidad * Habilidades.factorVelocidad);
 
   // Compensación de sincronía de OPCIONES, convertida a segundos
   double get desfase => ConfiguracionAudio.desfaseMs / 1000;
@@ -265,9 +267,11 @@ class RitnovaGame extends FlameGame with TapCallbacks {
   }
 
   Juicio _juzgar(double diferencia) {
-    if (diferencia <= ventanaPerfect) return Juicio.perfect;
-    if (diferencia <= ventanaGreat) return Juicio.great;
-    if (diferencia <= ventanaBad) return Juicio.bad;
+    // Las ventanas se ensanchan o se estrechan con Margen amplio y Precisión
+    final f = Habilidades.factorVentana;
+    if (diferencia <= ventanaPerfect * f) return Juicio.perfect;
+    if (diferencia <= ventanaGreat * f) return Juicio.great;
+    if (diferencia <= ventanaBad * f) return Juicio.bad;
     return Juicio.miss;
   }
 }
