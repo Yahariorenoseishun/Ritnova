@@ -7,23 +7,18 @@ class RitnovaScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (defaultTargetPlatform != TargetPlatform.android) {
-      return const Scaffold(
-        body: Center(child: Text("Esta pantalla solo se ve en Android.")),
-      );
+      return const Scaffold(body: Center(child: Text("Esta pantalla solo se ve en Android.")));
     }
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        // No ponemos AppBar de Flutter para que Kotlin maneje todo
         body: SafeArea(
           child: Stack(
             children: [
-              // La vista de Kotlin ocupa toda la pantalla
               const AndroidView(
                 viewType: 'com.example.ritnova/native_view',
               ),
-              // Botón flotante para volver a Flutter (por si acaso)
               Positioned(
                 top: 10,
                 right: 10,
