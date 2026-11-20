@@ -28,7 +28,7 @@ class FilaCancion extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 4, 20, 4),
+          padding: const EdgeInsets.fromLTRB(8, 4, 16, 4),
           child: Row(
             children: [
               // Corazón: lleno y naranja si es favorito, vacío y amarillo si no
@@ -36,19 +36,24 @@ class FilaCancion extends StatelessWidget {
                 icon: Icon(
                   esFavorito ? Icons.favorite : Icons.favorite_border,
                   color: esFavorito ? AppColors.primary : AppColors.secondary,
-                  size: 28,
+                  size: 26,
                 ),
                 onPressed: onFavorito,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
               ),
+              const SizedBox(width: 4),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(nivel.nombre,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppText.etiqueta),
+                    Text(
+                      nivel.nombre,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.etiqueta,
+                    ),
                     // El mejor puntaje solo aparece si ya jugaste ese nivel
                     if (mejor > 0)
                       Text(
@@ -59,11 +64,11 @@ class FilaCancion extends StatelessWidget {
                   ],
                 ),
               ),
-              // Dibuja 5 estrellas de dificultad: amarillas las primeras, grises el resto
+              // 5 estrellas de dificultad: amarillas las primeras, grises el resto
               for (int i = 0; i < 5; i++)
                 Icon(
                   Icons.star,
-                  size: 28,
+                  size: 24,
                   color: i < nivel.dificultad
                       ? AppColors.secondary
                       : AppColors.textMuted,

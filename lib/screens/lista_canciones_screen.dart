@@ -79,34 +79,53 @@ class _ListaCancionesScreenState extends State<ListaCancionesScreen> {
                           ),
                         ),
                         Expanded(
-                          // La barra siempre visible avisa que hay más niveles abajo
-                          child: Scrollbar(
-                            controller: _scroll,
-                            thumbVisibility: true,
-                            child: GridView.builder(
-                              controller: _scroll,
-                              padding: const EdgeInsets.only(right: 14, bottom: 8),
-                              // 2 columnas; cada fila mide 68 de alto
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                mainAxisSpacing: 12,
-                                crossAxisSpacing: 12,
-                                mainAxisExtent: 68,
-                              ),
-                              itemCount: items.length,
-                              itemBuilder: (context, i) => FilaCancion(
-                                nivel: items[i],
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => JuegoScreen(nivel: items[i]),
+                          // LayoutBuilder mide el espacio disponible para repartirlo
+                          child: LayoutBuilder(
+                            builder: (context, medidas) {
+                              const espacio = 10.0;
+                              const columnas = 2;
+                              final filas = (items.length / columnas).ceil();
+                              // Alto de cada fila: el necesario para que quepan todos
+                              // los niveles (nunca menos de 54 ni más de 72)
+                              double alto = (medidas.maxHeight -
+                                      8 -
+                                      espacio * (filas - 1)) /
+                                  filas;
+                              if (alto < 54) alto = 54;
+                              if (alto > 72) alto = 72;
+                              // Solo hace falta deslizar si aun así no caben
+                              final hayScroll = filas * (alto + espacio) >
+                                  medidas.maxHeight;
+                              return Scrollbar(
+                                controller: _scroll,
+                                thumbVisibility: hayScroll,
+                                child: GridView.builder(
+                                  controller: _scroll,
+                                  padding: const EdgeInsets.only(
+                                      right: 14, bottom: 8),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: columnas,
+                                    mainAxisSpacing: espacio,
+                                    crossAxisSpacing: 12,
+                                    mainAxisExtent: alto,
+                                  ),
+                                  itemCount: items.length,
+                                  itemBuilder: (context, i) => FilaCancion(
+                                    nivel: items[i],
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            JuegoScreen(nivel: items[i]),
+                                      ),
+                                    ),
+                                    onFavorito: () => Progreso.instancia
+                                        .alternarFavorito(items[i].id),
                                   ),
                                 ),
-                                onFavorito: () => Progreso.instancia
-                                    .alternarFavorito(items[i].id),
-                              ),
-                            ),
+                              );
+                            },
                           ),
                         ),
                       ],
