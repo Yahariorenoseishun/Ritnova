@@ -5,10 +5,11 @@ import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../widgets/barra_titulo.dart';
 import '../widgets/fila_cancion.dart';
-import 'juego_screen.dart';
+import '../widgets/linea_borde.dart';
+import 'pre_nivel_screen.dart';
 
 // Sirve para NIVELES y para FAVORITOS: solo cambia el título y el filtro
-class ListaCancionesScreen extends StatefulWidget {
+class ListaCancionesScreen extends StatelessWidget {
   final String titulo;
   final bool soloFavoritos;
 
@@ -19,35 +20,21 @@ class ListaCancionesScreen extends StatefulWidget {
   });
 
   @override
-  State<ListaCancionesScreen> createState() => _ListaCancionesScreenState();
-}
-
-class _ListaCancionesScreenState extends State<ListaCancionesScreen> {
-  // Controla el desplazamiento de la lista y de su barra
-  final ScrollController _scroll = ScrollController();
-
-  @override
-  void dispose() {
-    _scroll.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            BarraTitulo(titulo: widget.titulo),
+            BarraTitulo(titulo: titulo, compacta: true),
+            const LineaBorde(), // borde de arriba
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 // Se redibuja sola cuando Progreso avisa un cambio
                 child: ListenableBuilder(
                   listenable: Progreso.instancia,
                   builder: (context, _) {
-                    final items = widget.soloFavoritos
+                    final items = soloFavoritos
                         ? niveles
                             .where((n) => Progreso.instancia.esFavorito(n.id))
                             .toList()
@@ -56,7 +43,7 @@ class _ListaCancionesScreenState extends State<ListaCancionesScreen> {
                     if (items.isEmpty) {
                       return Center(
                         child: Text(
-                          widget.soloFavoritos
+                          soloFavoritos
                               ? 'Aún no tienes favoritos.\nToca el corazón de un nivel para agregarlo.'
                               : 'No hay niveles cargados.\nRevisa la carpeta assets/niveles y reinicia la app.',
                           textAlign: TextAlign.center,
@@ -66,74 +53,69 @@ class _ListaCancionesScreenState extends State<ListaCancionesScreen> {
                       );
                     }
 
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(right: 14, bottom: 6),
-                          child: Text(
-                            '${items.length} ${items.length == 1 ? 'nivel' : 'niveles'}  ·  DIFICULTAD',
-                            textAlign: TextAlign.right,
-                            style: AppText.etiqueta.copyWith(
-                                fontSize: 12, color: AppColors.textMuted),
-                          ),
-                        ),
-                        Expanded(
-                          // LayoutBuilder mide el espacio disponible para repartirlo
-                          child: LayoutBuilder(
-                            builder: (context, medidas) {
-                              const espacio = 10.0;
-                              const columnas = 2;
-                              final filas = (items.length / columnas).ceil();
-                              // Alto de cada fila: el necesario para que quepan todos
-                              // los niveles (nunca menos de 54 ni más de 72)
-                              double alto = (medidas.maxHeight -
-                                      8 -
-                                      espacio * (filas - 1)) /
-                                  filas;
-                              if (alto < 54) alto = 54;
-                              if (alto > 72) alto = 72;
-                              // Solo hace falta deslizar si aun así no caben
-                              final hayScroll = filas * (alto + espacio) >
-                                  medidas.maxHeight;
-                              return Scrollbar(
-                                controller: _scroll,
-                                thumbVisibility: hayScroll,
-                                child: GridView.builder(
-                                  controller: _scroll,
-                                  padding: const EdgeInsets.only(
-                                      right: 14, bottom: 8),
-                                  gridDelegate:
-                                      SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: columnas,
-                                    mainAxisSpacing: espacio,
-                                    crossAxisSpacing: 12,
-                                    mainAxisExtent: alto,
-                                  ),
-                                  itemCount: items.length,
-                                  itemBuilder: (context, i) => FilaCancion(
-                                    nivel: items[i],
-                                    onTap: () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            JuegoScreen(nivel: items[i]),
-                                      ),
-                                    ),
-                                    onFavorito: () => Progreso.instancia
-                                        .alternarFavorito(items[i].id),
+                    return LayoutBuilder(
+                      builder: (context, medidas) {
+                        // Largo del desvanecido (18 px) como fracción de la altura
+                        final f = medidas.maxHeight > 0
+                            ? 18 / medidas.maxHeight
+                            : 0.05;
+                        // ShaderMask pone una máscara: transparente en los bordes
+                        // y opaca en el centro, así las tarjetas se desvanecen
+                        // al acercarse a las líneas en lugar de cortarse
+                        return ShaderMask(
+                          blendMode: BlendMode.dstIn,
+                          shaderCallback: (rect) => LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: const [
+                              Color(0x00FFFFFF),
+                              Color(0xFFFFFFFF),
+                              Color(0xFFFFFFFF),
+                              Color(0x00FFFFFF),
+                            ],
+                            stops: [0.0, f, 1.0 - f, 1.0],
+                          ).createShader(rect),
+                          // Sin barra de desplazamiento ni efecto de estirado
+                          child: ScrollConfiguration(
+                            behavior: ScrollConfiguration.of(context)
+                                .copyWith(scrollbars: false, overscroll: false),
+                            child: GridView.builder(
+                              physics: const ClampingScrollPhysics(),
+                              // Margen arriba y abajo: las tarjetas en reposo
+                              // quedan en medio, sin tocar las líneas
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                mainAxisExtent: 76, // alto de cada tarjeta
+                              ),
+                              itemCount: items.length,
+                              itemBuilder: (context, i) => FilaCancion(
+                                nivel: items[i],
+                                // Al tocar un nivel se abre la pantalla previa
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        PreNivelScreen(nivel: items[i]),
                                   ),
                                 ),
-                              );
-                            },
+                                onFavorito: () => Progreso.instancia
+                                    .alternarFavorito(items[i].id),
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                        );
+                      },
                     );
                   },
                 ),
               ),
             ),
+            const LineaBorde(), // borde de abajo
+            const SizedBox(height: 10),
           ],
         ),
       ),

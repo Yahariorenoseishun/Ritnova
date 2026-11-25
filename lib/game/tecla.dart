@@ -86,17 +86,19 @@ class Tecla extends Component with HasGameReference<RitnovaGame> {
       game.partida.registrar(Juicio.bad);
     }
   }
-
   @override
   void update(double dt) {
     final t = game.tiempo;
     progreso = 1 - (tiempoObjetivo - t) / game.tiempoCaida;
     progresoCola = 1 - (tiempoFin - t) / game.tiempoCaida;
+    final salida = esLarga ? progresoCola : progreso;
+    final vencida = t - tiempoObjetivo >
+        RitnovaGame.ventanaBad * Habilidades.factorVentana;
 
-    // La cabeza pasó de largo sin que la tocaran: Miss
-    if (!resuelta &&
-        t - tiempoObjetivo >
-            RitnovaGame.ventanaBad * Habilidades.factorVentana) {
+    // La cabeza pasó de largo sin que la tocaran: Miss. También se cuenta si
+    // la tecla ya va a salir de la pantalla, así nunca se borra una tecla sin
+    // contar su fallo, sin importar la velocidad ni las habilidades.
+    if (!resuelta && (vencida || salida > 1.2)) {
       resuelta = true;
       fallida = true;
       game.partida.registrar(Juicio.miss);
@@ -109,12 +111,10 @@ class Tecla extends Component with HasGameReference<RitnovaGame> {
     }
 
     // Cuando ya salió de la pantalla, se elimina
-    final salida = esLarga ? progresoCola : progreso;
     if (salida > 1.2) {
       removeFromParent();
     }
   }
-
   // x del borde izquierdo o derecho de la tecla (con un pequeño margen)
   double _borde(double p, {required bool izquierda}) {
     final i = game.xBorde(carril, p);
