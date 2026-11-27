@@ -1,12 +1,13 @@
 import 'package:material_ui/material_ui.dart';
 import '../audio/musica_menu.dart';
-import '../models/configuracion_audio.dart';
 import '../models/progreso.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../widgets/barra_titulo.dart';
-import '../widgets/boton_pildora.dart';
-import '../widgets/control_volumen.dart';
+import '../widgets/linea_borde.dart';
+import '../widgets/panel_ajustes.dart';
+import 'como_jugar_screen.dart';
+import 'creditos_screen.dart';
 import 'habilidades_screen.dart';
 
 class OpcionesScreen extends StatefulWidget {
@@ -17,49 +18,70 @@ class OpcionesScreen extends StatefulWidget {
 }
 
 class _OpcionesScreenState extends State<OpcionesScreen> {
-  // Al salir de OPCIONES se guardan los ajustes en el teléfono
-  @override
-  void dispose() {
-    Progreso.instancia.guardarAjustes();
-    super.dispose();
+  void _abrir(Widget pantalla) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => pantalla));
   }
 
-  // Sube o baja la velocidad, siempre entre 1.0 y 30.0
-  void _cambiarVelocidad(double cambio) {
-    double nueva = ConfiguracionAudio.velocidad + cambio;
-    if (nueva < 1.0) nueva = 1.0;
-    if (nueva > 30.0) nueva = 30.0;
-    setState(() {
-      ConfiguracionAudio.velocidad = nueva;
-    });
+  // Pregunta antes de borrar, porque no se puede deshacer
+  Future<void> _borrarProgreso() async {
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text('¿Borrar todo el progreso?',
+            style: AppText.subtitulo.copyWith(fontSize: 18)),
+        content: Text(
+          'Se borran tus récords, favoritos, ajustes y habilidades. No se puede deshacer.',
+          style: AppText.contenido
+              .copyWith(fontSize: 14, color: AppColors.textMuted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('CANCELAR', style: AppText.etiqueta),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('BORRAR',
+                style: AppText.etiqueta.copyWith(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirmado == true) {
+      await Progreso.instancia.borrarTodo();
+      MusicaMenu.actualizarVolumen();
+      if (mounted) setState(() {}); // los ajustes se redibujan con los valores de fábrica
+    }
   }
 
-  // Sube o baja la sincronía, siempre entre -300 y 300 ms
-  void _cambiarDesfase(double cambio) {
-    double nuevo = ConfiguracionAudio.desfaseMs + cambio;
-    if (nuevo < -300) nuevo = -300;
-    if (nuevo > 300) nuevo = 300;
-    setState(() {
-      ConfiguracionAudio.desfaseMs = nuevo;
-    });
-  }
-
-  // Botón circular blanco con "-" o "+"
-  Widget _botonCirculo(String simbolo, VoidCallback onTap) {
+  // Una opción de la tarjeta MÁS: icono, texto y flecha
+  Widget _opcion(IconData icono, String texto, VoidCallback onTap,
+      {bool peligro = false}) {
     return Material(
-      color: AppColors.text,
-      shape: const CircleBorder(),
+      color: AppColors.base,
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        customBorder: const CircleBorder(),
         onTap: onTap,
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Center(
-            child: Text(
-              simbolo,
-              style: AppText.subtitulo.copyWith(color: AppColors.base),
-            ),
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            children: [
+              Icon(icono,
+                  size: 22,
+                  color: peligro ? AppColors.error : AppColors.secondary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  texto,
+                  style: AppText.etiqueta.copyWith(
+                      fontSize: 14,
+                      color: peligro ? AppColors.error : AppColors.text),
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: AppColors.textMuted),
+            ],
           ),
         ),
       ),
@@ -68,100 +90,72 @@ class _OpcionesScreenState extends State<OpcionesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final d = ConfiguracionAudio.desfaseMs.round();
-    final textoDesfase = d > 0 ? '+$d ms' : '$d ms';
+    final opciones = [
+      _opcion(Icons.bolt, 'HABILIDADES', () => _abrir(const HabilidadesScreen())),
+      _opcion(
+          Icons.help_outline, 'CÓMO JUGAR', () => _abrir(const ComoJugarScreen())),
+      _opcion(Icons.info_outline, 'CRÉDITOS', () => _abrir(const CreditosScreen())),
+      _opcion(Icons.delete_outline, 'BORRAR PROGRESO', _borrarProgreso,
+          peligro: true),
+    ];
 
     return Scaffold(
       body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const BarraTitulo(titulo: 'OPCIONES'),
+            const BarraTitulo(titulo: 'OPCIONES', compacta: true),
+            const LineaBorde(), // borde de arriba
             Expanded(
-              child: Center(
-                // FittedBox encoge el contenido si no cabe: así no hace falta scroll
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: SizedBox(
-                    width: 420,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ControlVolumen(
-                          titulo: 'VOL. MÚSICA',
-                          valor: ConfiguracionAudio.volumenMusica,
-                          onChanged: (v) => setState(() {
-                            ConfiguracionAudio.volumenMusica = v;
-                            MusicaMenu.actualizarVolumen(); // se oye el cambio al instante
-                          }),
-                        ),
-                        ControlVolumen(
-                          titulo: 'VOL. EFECTOS',
-                          valor: ConfiguracionAudio.volumenEfectos,
-                          onChanged: (v) => setState(() {
-                            ConfiguracionAudio.volumenEfectos = v;
-                          }),
-                        ),
-                        const SizedBox(height: 8),
-                        Text('VELOCIDAD', style: AppText.etiqueta),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+              child: LayoutBuilder(
+                builder: (context, medidas) {
+                  final disponible = medidas.maxWidth - 48;
+                  final ancho = disponible > 880 ? 880.0 : disponible;
+                  return Center(
+                    // FittedBox solo encoge si la pantalla es muy baja
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: SizedBox(
+                        width: ancho,
+                        height: 284,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            _botonCirculo('-', () => _cambiarVelocidad(-0.5)),
-                            const SizedBox(width: 24),
-                            Text(
-                              ConfiguracionAudio.velocidad.toStringAsFixed(1),
-                              style: AppText.subtitulo
-                                  .copyWith(color: AppColors.primary),
-                            ),
-                            const SizedBox(width: 24),
-                            _botonCirculo('+', () => _cambiarVelocidad(0.5)),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Text('SINCRONÍA', style: AppText.etiqueta),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _botonCirculo('-', () => _cambiarDesfase(-10)),
-                            const SizedBox(width: 24),
-                            SizedBox(
-                              width: 100,
-                              child: Text(
-                                textoDesfase,
-                                textAlign: TextAlign.center,
-                                style: AppText.subtitulo
-                                    .copyWith(color: AppColors.primary),
+                            const Expanded(flex: 10, child: TarjetaAjustes()),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              flex: 11,
+                              child: TarjetaPanel(
+                                titulo: 'MÁS',
+                                hijo: Column(
+                                  children: [
+                                    for (final o in opciones)
+                                      Expanded(
+                                        child: Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 8),
+                                          child: o,
+                                        ),
+                                      ),
+                                    Text(
+                                      'RITNOVA  ·  versión 1.0',
+                                      style: AppText.etiqueta.copyWith(
+                                          fontSize: 11,
+                                          color: AppColors.textMuted),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 24),
-                            _botonCirculo('+', () => _cambiarDesfase(10)),
                           ],
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Si oyes el sonido tarde, súbelo.',
-                          style: AppText.etiqueta.copyWith(
-                              fontSize: 12, color: AppColors.textMuted),
-                        ),
-                        const SizedBox(height: 14),
-                        BotonPildora(
-                          texto: 'HABILIDADES',
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const HabilidadesScreen()),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
             ),
+            const LineaBorde(), // borde de abajo
+            const SizedBox(height: 10),
           ],
         ),
       ),

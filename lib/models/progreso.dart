@@ -12,6 +12,24 @@ class Progreso extends ChangeNotifier {
   late SharedPreferences _prefs; // el "cuaderno" del teléfono
   Set<String> _favoritos = {}; // ids de los niveles favoritos
 
+    // ---------- Borrar todo ----------
+  // Borra lo guardado y vuelve a los valores de fábrica
+  Future<void> borrarTodo() async {
+    await _prefs.clear();
+    _favoritos = {};
+    ConfiguracionAudio.volumenMusica = 80;
+    ConfiguracionAudio.volumenEfectos = 50;
+    ConfiguracionAudio.velocidad = 10.0;
+    ConfiguracionAudio.desfaseMs = 0;
+    Habilidades.concentracion = false;
+    Habilidades.comboExperto = false;
+    Habilidades.margenAmplio = false;
+    Habilidades.nerviosismo = false;
+    Habilidades.precision = false;
+    Habilidades.rompeCombos = false;
+    notifyListeners();
+  }
+
   // Se llama una vez, al abrir la app: lee todo lo guardado
   Future<void> cargar() async {
     _prefs = await SharedPreferences.getInstance();

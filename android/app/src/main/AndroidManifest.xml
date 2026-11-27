@@ -5,7 +5,7 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/launcher_icon"
         android:label="ritnova"
         android:supportsRtl="true"
         android:theme="@style/LaunchTheme"
